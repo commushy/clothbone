@@ -1,4 +1,5 @@
 # run in pose mode with bone chain selected
+# currently generate edge only
 
 import bpy
 import bmesh
