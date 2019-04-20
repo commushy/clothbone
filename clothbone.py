@@ -11,6 +11,9 @@ myob = bpy.context.active_object
 bpy.ops.object.mode_set(mode = 'OBJECT')  
 selected_idx = [i.index for i in myob.data.vertices if i.select]
 
+bonelist =[]
+emptylist = []
+
 isfirst = True
 head_offset = Vector((0,0,0.1))
 
@@ -52,15 +55,20 @@ for v_index in selected_idx:
         b.parent = prev_b
         b.use_connect = True
         bpy.context.scene.update()
-        #bpy.ops.object.mode_set(mode='OBJECT')
         
-        # set bone constraint DAMPED TRACK
-        #bpy.ops.object.mode_set(mode='POSE')
-        #bp = amt.pose.bones[b.name]
-        #objbone = bp.constraints
-        #objbone.new('DAMPED_TRACK')
-        #objbone['Damped Track'].target = empty
+        bonelist.append(b)
+        emptylist.append(empty)
 
     # set prev_vert_coordinate  
     prev_vert_coordinate = vert_coordinate
     prev_b = b
+    
+for b, empty in zip(bonelist, emptylist):
+        #bpy.ops.object.mode_set(mode='OBJECT')
+        
+        # set bone constraint DAMPED TRACK
+        bpy.ops.object.mode_set(mode='POSE')
+        bp = amt.pose.bones[b.name]
+        objbone = bp.constraints
+        objbone.new('DAMPED_TRACK')
+        objbone['Damped Track'].target = empty
