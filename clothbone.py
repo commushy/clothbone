@@ -33,9 +33,20 @@ for v_index in selected_idx:
         b.head = vert_coordinate + head_offset
         b.tail = vert_coordinate
         b.use_deform = False
+        
         # set origin of object to vert_coordinate
+        #myob.select_set(state=True)
+        #bpy.ops.object.mode_set(mode = 'OBJECT')  
+        #saved_location = bpy.context.scene.cursor.location
+        #bpy.context.scene.cursor.location = vert_coordinate
+        #bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        #bpy.context.scene.cursor.location = saved_location
+        
         # create vertex goup 'pinned' from vertex
         # add object constraint "Copy Location" of root bone
+        #objc = myob.constraints.new(type='COPY_LOCATION')
+        
+        #myob.select_set(state=False)
         isfirst = False
     
     else:
