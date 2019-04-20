@@ -15,7 +15,7 @@ bonelist =[]
 emptylist = []
 
 isfirst = True
-head_offset = Vector((0,0,0.1))
+head_offset = Vector((0,0,0.01))
 
 for v_index in selected_idx:
     
