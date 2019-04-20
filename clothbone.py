@@ -21,11 +21,12 @@ for v_index in selected_idx:
     vert_coordinate = myob.matrix_world @ vert_coordinate
     
     if isfirst == True:
+            
         # add armature at vert_coordinate
         bpy.ops.object.add(type='ARMATURE', enter_editmode=True)
         amt = bpy.context.object
         # add root bone
-        b = amt.data.edit_bones.new(str(v_index))
+        b = amt.data.edit_bones.new("Clothbone")
         b.head = vert_coordinate + head_offset
         b.tail = vert_coordinate
         b.use_deform = False
@@ -45,7 +46,7 @@ for v_index in selected_idx:
         # add bone at head(prev_vert_coordinate),tail(vert_coordinate)
         amt.select_set(state=True)
         bpy.ops.object.mode_set(mode='EDIT')
-        b = amt.data.edit_bones.new(str(v_index))
+        b = amt.data.edit_bones.new("Clothbone")
         b.head = prev_vert_coordinate
         b.tail = vert_coordinate
         b.parent = prev_b
@@ -54,6 +55,8 @@ for v_index in selected_idx:
         #bpy.ops.object.mode_set(mode='OBJECT')
         
         # set bone constraint DAMPED TRACK
+        #bpy.ops.object.mode_set(mode='POSE')
+        #bp = amt.pose.bones[b.name]
         #objbone = bp.constraints
         #objbone.new('DAMPED_TRACK')
         #objbone['Damped Track'].target = empty
