@@ -1,85 +1,127 @@
-# run in edit mode with vertices selected
+# run in pose mode with bone chain selected
+# currently generate mesh only
 
 import bpy
+import bmesh
 from mathutils import Vector  
 
-# sort selected vertices by ZAXIS with reverse order
-#bpy.ops.mesh.sort_elements(type=‘VIEW_ZAXIS’)
-# get selected vertices
+loclist=[]
+loclist2=[]
+loclist3=[]
 
-myob = bpy.context.active_object  
-bpy.ops.object.mode_set(mode = 'OBJECT')  
-selected_idx = [i.index for i in myob.data.vertices if i.select]
+facelist=[]
+bonelist=[]
+vidx = 0
+initial = True
 
-bonelist =[]
-emptylist = []
+# get name of selected armature
+armature = bpy.context.object.name
+print(armature)
 
-isfirst = True
-head_offset = Vector((0,0,0.1)) 
-
-for v_index in selected_idx:
+# generate list of bones and coordinates from selected bone chain
+for x in bpy.context.selected_pose_bones:
+    bonelist.append(x)
+    xheadloc = bpy.data.objects[armature].location + x.head
+    xtailloc = bpy.data.objects[armature].location + x.tail
     
-    # get world coordinate of the vertice
-    vert_coordinate = myob.data.vertices[v_index].co  
-    vert_coordinate = myob.matrix_world @ vert_coordinate
-    
-    if isfirst == True:
-            
-        # add armature at vert_coordinate
-        bpy.ops.object.add(type='ARMATURE', enter_editmode=True)
-        amt = bpy.context.object
-        # add root bone
-        b = amt.data.edit_bones.new("Clothbone")
-        b.head = vert_coordinate + head_offset
-        b.tail = vert_coordinate
-        b.use_deform = False
-        
-        # set origin of object to vert_coordinate
-        #myob.select_set(state=True)
-        #bpy.ops.object.mode_set(mode = 'OBJECT')  
-        #saved_location = bpy.context.scene.cursor.location
-        #bpy.context.scene.cursor.location = vert_coordinate
-        #bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
-        #bpy.context.scene.cursor.location = saved_location
-        
-        # create vertex goup 'pinned' from vertex
-        # add object constraint "Copy Location" of root bone
-        #objc = myob.constraints.new(type='COPY_LOCATION')
-        
-        #myob.select_set(state=False)
-        isfirst = False
-    
+    if initial == True:
+        loclist.append(xheadloc)
+        loclist.append(xtailloc) 
+        initial = False
     else:
-        # parent empty
-        empty = bpy.data.objects.new("Empty", None)
-        empty.parent = myob
-        empty.parent_type = 'VERTEX'
-        empty.parent_vertices = [v_index] * 3
-        bpy.context.scene.collection.objects.link(empty)
+        loclist.append(xtailloc)
     
-        # add bone at head(prev_vert_coordinate),tail(vert_coordinate)
-        amt.select_set(state=True)
-        bpy.ops.object.mode_set(mode='EDIT')
-        b = amt.data.edit_bones.new("Clothbone")
-        b.head = prev_vert_coordinate
-        b.tail = vert_coordinate
-        b.parent = prev_b
-        b.use_connect = True
-        bpy.context.scene.update()
-        
-        bonelist.append(b)
-        emptylist.append(empty)
+print(bonelist)
+print(loclist)
 
-    # set prev_vert_coordinate  
-    prev_vert_coordinate = vert_coordinate
-    prev_b = b
+# calculate normal from first 2 edges
+vec1 = loclist[1]-loclist[0]
+vec2 = loclist[2]-loclist[1]
+vec3 = vec1.cross(vec2)
+# should normalize?
+
+print(vec1)
+print(vec2)
+print(vec3)
+
+# generate all vertice coordinate and face data
+n = len(loclist)
+print(n)
+
+for vidx in range(n):
+    v=loclist[vidx]
+    print(v)
+    loclist2.append(v+vec3)
+    loclist3.append(v-vec3)
+    if vidx < n-1: 
+        facelist.append([vidx,vidx+1,vidx+n+1,vidx+n])
+        facelist.append([vidx,vidx+1,vidx+n*2+1,vidx+n*2])
+
+# generate list of all vertices
+loclist4 = loclist + loclist2 + loclist3
+
+# generate mesh data
+n2=len(loclist4)
+
+print(n2)
+print(loclist2)
+print(loclist3)
+print(loclist4)
+print(facelist)
+
+msh = bpy.data.meshes.new(name="physmesh")
+msh.from_pydata(loclist4, [], facelist)
+msh.update()
+
+# create new object from mesh
+obj = bpy.data.objects.new(name="physobj", object_data=msh)
+
+# link new object to scene
+scene = bpy.context.scene
+scene.collection.objects.link(obj)
+
+for vidx in range(0,n-1):
+    # parent empty
+    empty = bpy.data.objects.new("Empty", None)
+    empty.parent = obj
+    empty.parent_type = 'VERTEX'
+    empty.parent_vertices = [vidx+1] * 3
+    bpy.context.scene.collection.objects.link(empty)
     
-for b, empty in zip(bonelist, emptylist):
-        #bpy.ops.object.mode_set(mode='OBJECT')
-        
-        # set bone constraint DAMPED TRACK
-        bpy.ops.object.mode_set(mode='POSE')
-        bp = amt.pose.bones[b.name]
-        objbone = bp.constraints
-        objbone.new('DAMPED_TRACK')
-        objbone['Damped Track'].target = empty
+    print(empty.name)
+    
+    # set bone constraint DAMPED TRACK
+    bpy.ops.object.mode_set(mode='POSE')
+    pb = bonelist[vidx]
+    objbone = pb.constraints
+    objbone.new('DAMPED_TRACK')
+    objbone['Damped Track'].target = empty
+    
+    print(pb.name)
+
+# get world coordinate of vertice 0
+origin_coordinate = obj.data.vertices[0].co
+origin_coordinate = origin_coordinate @ obj.matrix_world
+
+# set origin of object to origin_coordinate using 3d cursor
+obj.select_set(state=True)
+bpy.ops.object.mode_set(mode = 'OBJECT')  
+saved_location = bpy.context.scene.cursor.location
+bpy.context.scene.cursor.location = origin_coordinate
+bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+bpy.context.scene.cursor.location = saved_location
+
+# set object constraint COPY LOCATION
+constraint = obj.constraints.new('COPY_LOCATION')
+constraint.target = bpy.data.objects[armature]
+constraint.subtarget = bonelist[0].parent.name
+constraint.head_tail = 1
+
+# assign vertex group "pinned" for cloth simulation
+pinnedvg = obj.vertex_groups.new(name="pinned")
+pinnedverts = [0,n,n*2]
+pinnedvg.add(pinnedverts, 1.0, 'ADD')
+
+# add cloth modifier and set pinned group
+modifier = obj.modifiers.new(name="Cloth", type='CLOTH')
+modifier.settings.vertex_group_mass='pinned'
