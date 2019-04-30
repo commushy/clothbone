@@ -1,8 +1,6 @@
 # run in pose mode with bone chain selected
-# currently generate mesh only
 
 import bpy
-import bmesh
 from mathutils import Vector  
 
 loclist=[]
