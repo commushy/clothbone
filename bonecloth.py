@@ -1,12 +1,15 @@
 # run in pose mode with bone chain selected
-# currently generate edge only
+# currently generate mesh only
 
 import bpy
 import bmesh
 from mathutils import Vector  
 
 loclist=[]
-edgelist=[]
+loclist2=[]
+loclist3=[]
+
+facelist=[]
 bonelist=[]
 vidx = 0
 initial = True
@@ -14,6 +17,7 @@ initial = True
 # need update: get armature reference from selected bones
 armature = "Armature"
 
+# generate list of bones and coordinates from selected bone chain
 for x in bpy.context.selected_pose_bones:
     bonelist.append(x)
     xheadloc = bpy.data.objects[armature].location + x.head
@@ -25,30 +29,58 @@ for x in bpy.context.selected_pose_bones:
         initial = False
     else:
         loclist.append(xtailloc)
-    edgelist.append([vidx,vidx+1])
-    vidx=vidx+1
     
 print(bonelist)
 print(loclist)
-print(edgelist)
 
+# calculate normal from first 2 edges
 vec1 = loclist[1]-loclist[0]
 vec2 = loclist[2]-loclist[1]
-vec3 = vec1.cross(vec2) #normal vector of first 2 edges
-vec4 = -vec3 #inverse of vec3
+vec3 = vec1.cross(vec2)
+# should normalize?
 
 print(vec1)
 print(vec2)
 print(vec3)
-print(vec4)
 
+# generate all vertice coordinate and face data
+n = len(loclist)
+print(n)
 
+for vidx in range(n):
+    v=loclist[vidx]
+    print(v)
+    loclist2.append(v+vec3)
+    loclist3.append(v-vec3)
+    if vidx < n-1: 
+        facelist.append([vidx,vidx+1,vidx+n+1,vidx+n])
+        facelist.append([vidx,vidx+1,vidx+n*2+1,vidx+n*2])
+
+# generate list of all vertices
+loclist4 = loclist + loclist2 + loclist3
+
+# generate mesh data
+n2=len(loclist4)
+
+print(n2)
+print(loclist2)
+print(loclist3)
+print(loclist4)
+print(facelist)
 
 msh = bpy.data.meshes.new(name="physmesh")
-msh.from_pydata(loclist, edgelist, [])
+msh.from_pydata(loclist4, [], facelist)
 msh.update()
 
+# create new object from mesh
 obj = bpy.data.objects.new(name="physobj", object_data=msh)
+
+# link new object to scene
 scene = bpy.context.scene
 scene.collection.objects.link(obj)
 
+# get world coordinate of vertice 0
+origin_coordinate = obj.data.vertices[0].co
+origin_coordinate = origin_coordinate @ obj.matrix_world
+
+# set origin of object to origin_coordinate using 3d cursor
