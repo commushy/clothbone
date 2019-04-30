@@ -125,3 +125,5 @@ pinnedvg.add(pinnedverts, 1.0, 'ADD')
 # add cloth modifier and set pinned group
 modifier = obj.modifiers.new(name="Cloth", type='CLOTH')
 modifier.settings.vertex_group_mass='pinned'
+
+bpy.ops.object.mode_set(mode='POSE')
