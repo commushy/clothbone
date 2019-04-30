@@ -38,7 +38,7 @@ print(loclist)
 vec1 = loclist[1]-loclist[0]
 vec2 = loclist[2]-loclist[1]
 vec3 = vec1.cross(vec2)
-# should normalize?
+vec3 = vec3.normalized() *0.01
 
 print(vec1)
 print(vec2)
