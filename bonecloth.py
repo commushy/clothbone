@@ -92,3 +92,7 @@ bpy.context.scene.cursor.location = origin_coordinate
 bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
 bpy.context.scene.cursor.location = saved_location
 
+# set object constraint COPY LOCATION
+constraint = obj.constraints.new('COPY_LOCATION')
+constraint.target = bpy.data.objects[armature]
+constraint.subtarget = bonelist[0].name
