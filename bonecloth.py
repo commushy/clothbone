@@ -84,3 +84,10 @@ origin_coordinate = obj.data.vertices[0].co
 origin_coordinate = origin_coordinate @ obj.matrix_world
 
 # set origin of object to origin_coordinate using 3d cursor
+obj.select_set(state=True)
+bpy.ops.object.mode_set(mode = 'OBJECT')  
+saved_location = bpy.context.scene.cursor.location
+bpy.context.scene.cursor.location = origin_coordinate
+bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+bpy.context.scene.cursor.location = saved_location
+
