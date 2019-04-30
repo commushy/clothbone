@@ -14,8 +14,9 @@ bonelist=[]
 vidx = 0
 initial = True
 
-# need update: get armature reference from selected bones
-armature = "Armature"
+# get name of selected armature
+armature = bpy.context.object.name
+print(armature)
 
 # generate list of bones and coordinates from selected bone chain
 for x in bpy.context.selected_pose_bones:
