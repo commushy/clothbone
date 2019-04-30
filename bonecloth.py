@@ -80,6 +80,25 @@ obj = bpy.data.objects.new(name="physobj", object_data=msh)
 scene = bpy.context.scene
 scene.collection.objects.link(obj)
 
+for vidx in range(0,n-1):
+    # parent empty
+    empty = bpy.data.objects.new("Empty", None)
+    empty.parent = obj
+    empty.parent_type = 'VERTEX'
+    empty.parent_vertices = [vidx+1] * 3
+    bpy.context.scene.collection.objects.link(empty)
+    
+    print(empty.name)
+    
+    # set bone constraint DAMPED TRACK
+    bpy.ops.object.mode_set(mode='POSE')
+    pb = bonelist[vidx]
+    objbone = pb.constraints
+    objbone.new('DAMPED_TRACK')
+    objbone['Damped Track'].target = empty
+    
+    print(pb.name)
+
 # get world coordinate of vertice 0
 origin_coordinate = obj.data.vertices[0].co
 origin_coordinate = origin_coordinate @ obj.matrix_world
@@ -95,4 +114,14 @@ bpy.context.scene.cursor.location = saved_location
 # set object constraint COPY LOCATION
 constraint = obj.constraints.new('COPY_LOCATION')
 constraint.target = bpy.data.objects[armature]
-constraint.subtarget = bonelist[0].name
+constraint.subtarget = bonelist[0].parent.name
+constraint.head_tail = 1
+
+# assign vertex group "pinned" for cloth simulation
+pinnedvg = obj.vertex_groups.new(name="pinned")
+pinnedverts = [0,n,n*2]
+pinnedvg.add(pinnedverts, 1.0, 'ADD')
+
+# add cloth modifier and set pinned group
+modifier = obj.modifiers.new(name="Cloth", type='CLOTH')
+modifier.settings.vertex_group_mass='pinned'
